@@ -1,0 +1,152 @@
+# version: '3.8'
+
+# services:
+#   app:
+#     build: .
+#     volumes:
+#       - ./src:/app/src
+#     command: python /app/src/main.py
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  webserver:
+    image: apache/airflow:2.3.0
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__FERNET_KEY: '9QBYZfejOlREV41odypMTbH8AP6MSneybnUSGm1Fkow='
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src  # Mount your source code directory
+      - ./logs:/opt/airflow/logs  # Mount the logs directory
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    command: bash -c "airflow webserver"
+
+  scheduler:
+    image: apache/airflow:2.3.0
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__FERNET_KEY: '9QBYZfejOlREV41odypMTbH8AP6MSneybnUSGm1Fkow='
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src  # Mount your source code directory
+      - ./logs:/opt/airflow/logs  # Mount the logs directory
+    depends_on:
+      - postgres
+    command: bash -c "airflow scheduler"
+
+  airflow-init:
+    image: apache/airflow:2.3.0
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__FERNET_KEY: '9QBYZfejOlREV41odypMTbH8AP6MSneybnUSGm1Fkow='
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src  # Mount your source code directory
+      - ./logs:/opt/airflow/logs  # Mount the logs directory
+    depends_on:
+      - postgres
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db init &&
+        airflow users create \
+          --username admin \
+          --password admin \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email admin@example.com
+
+volumes:
+  postgres_data:
+
+
+# version: '3.8'
+
+# services:
+#   postgres:
+#     image: postgres:13
+#     environment:
+#       POSTGRES_USER: airflow
+#       POSTGRES_PASSWORD: airflow
+#       POSTGRES_DB: airflow
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+
+#   webserver:
+#     image: apache/airflow:2.3.0
+#     environment:
+#       AIRFLOW__CORE__EXECUTOR: LocalExecutor
+#       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+#       AIRFLOW__CORE__FERNET_KEY: '9QBYZfejOlREV41odypMTbH8AP6MSneybnUSGm1Fkow='
+#       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+#     volumes:
+#       - ./dags:/opt/airflow/dags
+#       - ./src:/opt/airflow/src  # Mount your source code directory
+#     ports:
+#       - "8080:8080"
+#     depends_on:
+#       - postgres
+#     command: bash -c "airflow webserver"
+
+#   scheduler:
+#     image: apache/airflow:2.3.0
+#     environment:
+#       AIRFLOW__CORE__EXECUTOR: LocalExecutor
+#       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+#       AIRFLOW__CORE__FERNET_KEY: '9QBYZfejOlREV41odypMTbH8AP6MSneybnUSGm1Fkow='
+#       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+#     volumes:
+#       - ./dags:/opt/airflow/dags
+#       - ./src:/opt/airflow/src  # Mount your source code directory
+#     depends_on:
+#       - postgres
+#     command: bash -c "airflow scheduler"
+
+#   airflow-init:
+#     image: apache/airflow:2.3.0
+#     environment:
+#       AIRFLOW__CORE__EXECUTOR: LocalExecutor
+#       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+#       AIRFLOW__CORE__FERNET_KEY: '9QBYZfejOlREV41odypMTbH8AP6MSneybnUSGm1Fkow='
+#       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+#     volumes:
+#       - ./dags:/opt/airflow/dags
+#       - ./src:/opt/airflow/src  # Mount your source code directory
+#     depends_on:
+#       - postgres
+#     entrypoint: /bin/bash
+#     command:
+#       - -c
+#       - |
+#         airflow db init &&
+#         airflow users create \
+#           --username admin \
+#           --password admin \
+#           --firstname Admin \
+#           --lastname User \
+#           --role Admin \
+#           --email admin@example.com
+
+# volumes:
+#   postgres_data:
